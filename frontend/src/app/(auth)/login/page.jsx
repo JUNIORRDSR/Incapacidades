@@ -38,15 +38,16 @@ export default function LoginPage() {
       setIsLoading(true);
 
       const response = await authApi.login(data);
-      
-      login(
-        response.user,
-        response.accessToken,
-        response.refreshToken
-      );
+      const { user, accessToken, refreshToken } = response.data || {};
+
+      if (!user || !accessToken) {
+        throw new Error('Respuesta inválida del servidor');
+      }
+
+      login(user, accessToken, refreshToken);
 
       // Redirect based on role
-      if (response.user.role === 'ADMIN') {
+      if (user.role === 'ADMIN') {
         router.push('/admin');
       } else {
         router.push('/dashboard');

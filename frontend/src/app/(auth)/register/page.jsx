@@ -46,13 +46,14 @@ export default function RegisterPage() {
       const { confirmPassword, ...registerData } = data;
       
       const response = await authApi.register(registerData);
-      
+      const { user, accessToken, refreshToken } = response.data || {};
+
+      if (!user || !accessToken) {
+        throw new Error('Respuesta inválida del servidor');
+      }
+
       // Auto-login after successful registration
-      login(
-        response.user,
-        response.accessToken,
-        response.refreshToken
-      );
+      login(user, accessToken, refreshToken);
 
       router.push('/dashboard');
     } catch (err) {
