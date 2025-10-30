@@ -1,0 +1,86 @@
+services:
+  # PostgreSQL Database (Structured Data)
+  postgres:
+    image: postgres:16-alpine
+    container_name: incapacidades-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Salac123*
+      POSTGRES_DB: incapacidades
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - incapacidades-network
+
+  # MongoDB Database (GridFS File Storage)
+  mongodb:
+    image: mongo:7
+    container_name: incapacidades-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: incapacidades
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/incapacidades --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - incapacidades-network
+
+  # PgAdmin (Optional - PostgreSQL Management UI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: incapacidades-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@incapacidades.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - incapacidades-network
+
+  # Mongo Express (Optional - MongoDB Management UI)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: incapacidades-mongo-express
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+    networks:
+      - incapacidades-network
+
+volumes:
+  postgres_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  incapacidades-network:
+    driver: bridge
